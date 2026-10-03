@@ -1,0 +1,17 @@
+README.md
+pyproject.toml
+llamatui/__init__.py
+llamatui/__main__.py
+llamatui/backend.py
+llamatui/cli.py
+llamatui/downloader.py
+llamatui/gguf.py
+llamatui/models.py
+llamatui/ui.py
+llamatui.egg-info/PKG-INFO
+llamatui.egg-info/SOURCES.txt
+llamatui.egg-info/dependency_links.txt
+llamatui.egg-info/entry_points.txt
+llamatui.egg-info/requires.txt
+llamatui.egg-info/top_level.txt
+tests/test_core.py

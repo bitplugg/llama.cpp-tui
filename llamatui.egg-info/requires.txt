@@ -1,0 +1,6 @@
+rich>=13
+tqdm>=4.66
+prompt_toolkit>=3.0
+
+[dev]
+pytest
