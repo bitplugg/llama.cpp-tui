@@ -1,0 +1,19 @@
+Metadata-Version: 2.4
+Name: llamatui
+Version: 0.1.0
+Summary: Красивая консольная оболочка над llama.cpp (rich + tqdm, без textual)
+Author: llamatui
+License: MIT
+Keywords: llama.cpp,gguf,tui,rich,tqdm,llm,local
+Classifier: Environment :: Console
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: rich>=13
+Requires-Dist: tqdm>=4.66
+Requires-Dist: prompt_toolkit>=3.0
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+
+# llama.cpp-tui

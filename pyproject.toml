@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llamatui"
+version = "0.1.0"
+description = "Красивая консольная оболочка над llama.cpp (rich + tqdm, без textual)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "llamatui" }]
+keywords = ["llama.cpp", "gguf", "tui", "rich", "tqdm", "llm", "local"]
+classifiers = [
+    "Environment :: Console",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "rich>=13",
+    "tqdm>=4.66",
+    "prompt_toolkit>=3.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+llamatui = "llamatui.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["llamatui*"]
