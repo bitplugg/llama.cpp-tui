@@ -11,9 +11,20 @@ from pathlib import Path
 
 MAGIC = b"GGUF"
 
-# GGUFTYPE
-T_UINT8, T_INT8, T_UINT16, T_INT16, T_UINT32, T_INT32 = range(6)
-T_FLOAT32, T_BOOL, T_STRING, T_ARRAY, T_UINT64, T_INT64, T_FLOAT64 = range(6, 13)
+# GGUFTYPE (https://github.com/ggml-org/ggml/blob/master/docs/gguf.md)
+T_UINT8   = 0
+T_INT8    = 1
+T_UINT16  = 2
+T_INT16   = 3
+T_UINT32  = 4
+T_INT32   = 5
+T_FLOAT32 = 6
+T_BOOL    = 7
+T_STRING  = 8
+T_ARRAY   = 9
+T_UINT64  = 10
+T_INT64   = 11
+T_FLOAT64 = 12
 
 _SCALAR_FMT = {
     T_UINT8: "<B", T_INT8: "<b", T_UINT16: "<H", T_INT16: "<h",
@@ -62,8 +73,11 @@ class GGUFMetadata:
 
     @property
     def eos(self) -> str:
-        toks = self.kv.get(f"{self.arch}.tokenizer.ggml.eos_token_id")
-        names = self.kv.get(f"{self.arch}.tokenizer.ggml.tokens")
+        # в GGUF словарь токенов живёт под префиксом tokenizer.ggml.* (без имени архитетуры)
+        toks = (self.kv.get(f"{self.arch}.tokenizer.ggml.eos_token_id")
+                or self.kv.get("tokenizer.ggml.eos_token_id"))
+        names = (self.kv.get(f"{self.arch}.tokenizer.ggml.tokens")
+                 or self.kv.get("tokenizer.ggml.tokens"))
         if isinstance(toks, list) and toks and isinstance(names, list):
             try:
                 return str(names[int(toks[0])])
@@ -90,17 +104,18 @@ def read_gguf_metadata(path: Path | str, max_kv_bytes: int = 64 << 20) -> GGUFMe
     """Читает заголовок и KV-пары. Останавливается на списке тензоров (экономно)."""
     path = Path(path)
     with open(path, "rb") as fh:
-        head = fh.read(12)
-        if len(head) < 12 or head[:4] != MAGIC:
+        # GGUF v2/v3 заголовок: magic(4) + version(u32) + n_tensors(u64) + n_kv(u64) = 32 байта
+        head = fh.read(8)
+        if len(head) < 8 or head[:4] != MAGIC:
             raise GGUFError(f"{path.name}: это не GGUF-файл")
         (version,) = struct.unpack("<I", head[4:8])
         if version < 2:
             raise GGUFError(f"Слишком старый GGUF v{version} (нужен v2/v3)")
-        (n_tensors,) = struct.unpack("<Q", head[8:12])
+        (n_tensors,) = struct.unpack("<Q", fh.read(8))
         (n_kv,) = struct.unpack("<Q", fh.read(8))
 
         md = GGUFMetadata(version=version, n_tensors=n_tensors)
-        pos = 24
+        pos = 32
         for _ in range(n_kv):
             key = _read_string(fh)
             vtype = struct.unpack("<I", fh.read(4))[0]

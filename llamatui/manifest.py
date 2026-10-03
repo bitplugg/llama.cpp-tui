@@ -9,6 +9,7 @@ PARAMETER'ы и системный промпт подтягиваются из 
 
 from __future__ import annotations
 
+import re
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -167,20 +168,17 @@ def _collect_parameters(md) -> dict:
 
 
 def default_manifest_name(gguf_path: Path | str) -> str:
-    """qwen2.5-coder-7b-instruct-q4_k_m.gguf -> qwen2.5-coder-7b:q4_k_m"""
+    """qwen2.5-coder-7b-instruct-q4_k_m.gguf -> qwen2.5-coder-7b-instruct:q4_k_m"""
     stem = Path(gguf_path).name.lower().removesuffix(".gguf")
-    parts = [p for p in stem.replace("_", "-").split("-") if p]
-    quant = ""
-    for tok in ("q8_0", "q6_k", "q5_k_m", "q5_k_s", "q4_k_m", "q4_k_s", "q4_0", "q3_k_m",
-                "iq3_xxs", "iq2_xxs", "f16", "bf16"):
-        if tok in parts[-2:] or stem.endswith(tok):
-            quant = ":" + tok.replace("_", "_")
-            break
-    # схлопываем имя: убираем мусор вида 'gguf', 'v2' оставляем
-    name = "-".join(p for p in parts if p not in {"gguf"})
-    if quant and name.endswith(quant.lstrip(":")):
-        name = name[: -len(quant.lstrip(":"))].rstrip("-")
-    return (name or "custom-model") + (quant or ":latest")
+    # в именах моделей нижние подчёркивания внутри кванта часто пишут через дефис: q4-k-m
+    m = re.search(r"[-_]((?:i?q)\d+(?:[-_](?:\d+|[km]))+|bf16|f16)$",
+                  stem.replace("_", "-"))
+    quant = m.group(1).replace("-", "_") if m else ""
+    rest = stem[: m.start()] if m else stem
+    parts = [p for p in rest.replace("_", "-").split("-") if p]
+    parts = [p for p in parts if p != "gguf"]
+    name = "-".join(parts) or "custom-model"
+    return f"{name}:{quant}" if quant else f"{name}:latest"
 
 
 def ollama_available() -> bool:
