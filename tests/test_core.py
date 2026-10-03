@@ -33,10 +33,12 @@ def write_gguf(path: Path, kv: dict, n_tensors: int = 3):
             buf.write(struct.pack("<I", 6) + struct.pack("<f", v))
         elif isinstance(v, list):
             if v and isinstance(v[0], str):
-                buf.write(struct.pack("<I", 8) + struct.pack("<Q", len(v)))
+                # массив строк: ARRAY(9), elem_type=STRING(8), count, затем строки
+                buf.write(struct.pack("<I", 9) + struct.pack("<I", 8) + struct.pack("<Q", len(v)))
                 for s in v:
                     buf.write(_s(s))
             else:
+                # массив u32: ARRAY(9), elem_type=UINT32(4), count, затем значения
                 buf.write(struct.pack("<I", 9) + struct.pack("<I", 4) + struct.pack("<Q", len(v)))
                 for i in v:
                     buf.write(struct.pack("<I", i))
